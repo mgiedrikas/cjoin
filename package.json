@@ -21,6 +21,7 @@
   "homepage": "https://github.com/mgiedrik/cjoin#readme",
   "devDependencies": {
     "chai": "^4.2.0",
+    "cmake-js": "^5.2.0",
     "mocha": "^6.1.4",
     "node-gyp": "^5.0.1"
   },

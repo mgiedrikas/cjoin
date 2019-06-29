@@ -6,18 +6,20 @@
 using namespace rapidjson;
 using namespace std;
 
-bool mergeObjects(rapidjson::Value &dstObject, rapidjson::Value &srcObject, rapidjson::Document::AllocatorType &allocator);
+bool
+mergeObjects(rapidjson::Value &dstObject, rapidjson::Value &srcObject, rapidjson::Document::AllocatorType &allocator);
 
-int main () {
+int main() {
 
     // 1. Parse a JSON string into DOM.
 //    const char* json = "{\"project\":\"rapidjson\",\"stars\":10}";
-    const char* json1 = "["
+    string fields[] = {"id", "type"};
+    const char *json1 = "["
                         "{ \"id\": \"1001\", \"type\": \"Regular\" },"
                         "{ \"id\": \"1004\", \"type\": \"Devil's Food\" }"
                         "]";
 
-    const char* json2 = "["
+    const char *json2 = "["
                         "{ \"id\": \"1001\", \"type\": \"Chocolate\", \"type2\": \"Chocolate2\" }"
                         "]";
     Document doc, doc2;
@@ -32,11 +34,13 @@ int main () {
     for (auto itr = doc.Begin(); itr != doc.End(); ++itr) {
         assert((*itr).IsObject()); // each jsonObj is an object
 
-        const rapidjson::Value& jsonObj = *itr;
+        const rapidjson::Value &jsonObj = *itr;
 
-        for (auto itr2 = doc2.Begin(); itr2 != doc2.End(); ++itr2)  {
+        for (auto itr2 = doc2.Begin(); itr2 != doc2.End(); ++itr2) {
             assert((*itr2).IsObject()); // each jsonObj is an object
-            const rapidjson::Value& jsonObj2 = *itr2;
+            const rapidjson::Value &jsonObj2 = *itr2;
+            std::cout << "Length of array = " << (sizeof(fields) / sizeof(*fields)) << std::endl;
+
             auto dstObj = jsonObj2.FindMember("id");
             cout << dstObj->value.GetString() << endl;
         }
@@ -60,60 +64,49 @@ int main () {
     return 0;
 }
 
-void myMethod(char* arr1) {
+void myMethod(char *arr1) {
 
 }
 
-void myMethod(char* arr1, char* arr2) {
+void myMethod(char *arr1, char *arr2) {
 
 }
 
-bool mergeObjects(rapidjson::Value &dstObject, rapidjson::Value &srcObject, rapidjson::Document::AllocatorType &allocator)
-{
-    for (auto srcIt = srcObject.MemberBegin(); srcIt != srcObject.MemberEnd(); ++srcIt)
-    {
+bool mergeObjects(Value &dstObject, Value &srcObject, Document::AllocatorType &allocator) {
+    for (auto srcIt = srcObject.MemberBegin(); srcIt != srcObject.MemberEnd(); ++srcIt) {
         auto dstIt = dstObject.FindMember(srcIt->name);
-        if (dstIt == dstObject.MemberEnd())
-        {
-            rapidjson::Value dstName ;
+        if (dstIt == dstObject.MemberEnd()) {
+            rapidjson::Value dstName;
             dstName.CopyFrom(srcIt->name, allocator);
-            rapidjson::Value dstVal ;
-            dstVal.CopyFrom(srcIt->value, allocator) ;
+            rapidjson::Value dstVal;
+            dstVal.CopyFrom(srcIt->value, allocator);
 
             dstObject.AddMember(dstName, dstVal, allocator);
 
             dstName.CopyFrom(srcIt->name, allocator);
             dstIt = dstObject.FindMember(dstName);
             if (dstIt == dstObject.MemberEnd())
-                return false ;
-        }
-        else
-        {
-            auto srcT = srcIt->value.GetType() ;
-            auto dstT = dstIt->value.GetType() ;
-            if(srcT != dstT)
-                return false ;
+                return false;
+        } else {
+            auto srcT = srcIt->value.GetType();
+            auto dstT = dstIt->value.GetType();
+            if (srcT != dstT)
+                return false;
 
-            if (srcIt->value.IsArray())
-            {
-                for (auto arrayIt = srcIt->value.Begin(); arrayIt != srcIt->value.End(); ++arrayIt)
-                {
-                    rapidjson::Value dstVal ;
-                    dstVal.CopyFrom(*arrayIt, allocator) ;
+            if (srcIt->value.IsArray()) {
+                for (auto arrayIt = srcIt->value.Begin(); arrayIt != srcIt->value.End(); ++arrayIt) {
+                    rapidjson::Value dstVal;
+                    dstVal.CopyFrom(*arrayIt, allocator);
                     dstIt->value.PushBack(dstVal, allocator);
                 }
-            }
-            else if (srcIt->value.IsObject())
-            {
-                if(!mergeObjects(dstIt->value, srcIt->value, allocator))
-                    return false ;
-            }
-            else
-            {
-                dstIt->value.CopyFrom(srcIt->value, allocator) ;
+            } else if (srcIt->value.IsObject()) {
+                if (!mergeObjects(dstIt->value, srcIt->value, allocator))
+                    return false;
+            } else {
+                dstIt->value.CopyFrom(srcIt->value, allocator);
             }
         }
     }
 
-    return true ;
+    return true;
 }

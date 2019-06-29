@@ -49,5 +49,30 @@ describe('#lib.testNum', function() {
            console.log(lib.testAddon.hello());
 
         });
+
+        it('should call c++ method and print js array', function() {
+            let arr = [
+                [
+                    "not an object",
+                    {
+                        "FirstArrKey": "FirstArrValue"
+                    },
+                    {
+                        "FirstArrOne": "FirstArrTwo"
+                    }
+                ],
+                [
+                    {
+                        "SecondArrKey": "SecondArrValue"
+                    },
+                    {
+                        "SecondArrOne": "SecondArrTwo"
+                    }
+                ]
+
+            ];
+            console.log(lib.testAddon.join(arr));
+
+        });
     });
 });
