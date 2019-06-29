@@ -1,10 +1,35 @@
-#include "include/rapidjson/document.h"
-#include "include/rapidjson/writer.h"
-#include "include/rapidjson/stringbuffer.h"
 #include "sample.h"
+//#include "include/hsql/SQLParser.h"
+//#include "include/hsql/util/sqlhelper.h"
+
 #include <iostream>
 
 using namespace std;
+using namespace Napi;
+
+//void parseSql(string sql) {
+//    // parse a given query
+//    hsql::SQLParserResult result;
+//    hsql::SQLParser::parse(sql, &result);
+//
+//    // check whether the parsing was successful
+//
+//    if (result.isValid()) {
+//        printf("Parsed successfully!\n");
+//        printf("Number of statements: %zu\n", result.size());
+//
+//        for (auto i = 0u; i < result.size(); ++i) {
+//            // Print a statement summary.
+//            hsql::printStatementInfo(result.getStatement(i));
+//        }
+//    } else {
+//        fprintf(stderr, "Given string is not a valid SQL query.\n");
+//        fprintf(stderr, "%s (L%d:%d)\n",
+//                result.errorMsg(),
+//                result.errorLine(),
+//                result.errorColumn());
+//    }
+//}
 
 string CJoin::hello() {
     return "Hello World 2";
@@ -23,11 +48,16 @@ Napi::String CJoin::HelloWrapped(const Napi::CallbackInfo &info) {
 
 Napi::String CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
-    Napi::Array buf = info[0].As<Napi::Array>();
 
-    // loop over outer array
-    for (size_t i = 0; i < buf.Length(); ++i) {
-        Napi::Value v = buf.Get(i);
+    String sql = info[0].As<String>();
+    Array arrays = info[1].As<Array>();
+
+    cout << "SQL: " << sql.Utf8Value() << endl;
+//    parseSql(sql.Utf8Value());
+
+    // loop over outer array, outer array holds a number of result sets (tables)
+    for (size_t i = 0; i < arrays.Length(); ++i) {
+        Napi::Value v = arrays.Get(i);
 //        assert(v.IsArray());
         cout << "v is array: " << v.IsArray() << endl;
         Napi::Array arr = v.As<Napi::Array>();
@@ -38,6 +68,7 @@ Napi::String CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
 //            assert(obj.IsObject());
             cout << "obj is obj: " << obj.IsObject() << endl;
             if(!obj.IsObject()) {
+                Napi::TypeError::New(env, "Object expected").ThrowAsJavaScriptException();
                 cout << obj.Type() << endl;
             }
 
@@ -52,8 +83,6 @@ Napi::String CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
 
 
 Napi::Object CJoin::Init(Napi::Env env, Napi::Object exports) {
-    exports.Set("hello", Napi::Function::New(env, HelloWrapped));
     exports.Set("join", Napi::Function::New(env, JoinWrapper));
-
     return exports;
 }

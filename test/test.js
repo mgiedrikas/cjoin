@@ -71,7 +71,7 @@ describe('#lib.testNum', function() {
                 ]
 
             ];
-            console.log(lib.testAddon.join(arr));
+            console.log(lib.testAddon.join("select srcSysCd as Source_System_Code from t1 join t2 on t1.src = t2.src", arr));
 
         });
     });
