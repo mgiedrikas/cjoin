@@ -10,7 +10,9 @@
       ],
       "sources": [
         "cppsrc/main.cpp",
-        "cppsrc/sample.cpp"
+        "cppsrc/sample.cpp",
+        "cppsrc/Join.cpp",
+        "cppsrc/Util.cpp"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
