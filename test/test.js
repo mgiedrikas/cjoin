@@ -14176,7 +14176,7 @@ describe('#lib.testNum', function() {
                     }
                 ],
             ];
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < arr.length; i++) {
                 console.log(arr[i].length);
             }
             console.log(lib.testAddon.join(sql, arr));

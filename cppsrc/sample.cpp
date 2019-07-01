@@ -13,7 +13,6 @@
 using namespace std;
 using namespace Napi;
 
-int currentTable = -1;
 // for string delimiter
 vector <string> split(string s, string delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
@@ -151,63 +150,75 @@ void hasJoinFields(Napi::Env &env, Napi::Object t, map <string, string> fields, 
         }
 
         if (!t.Has(Napi::String::New(env, f))) {
-            cout << f << " not in tbl " << currentTable << endl;
+            cout << f << " not in tbl " << endl;
 //            Napi::TypeError::New(env, "Object does not have join field").ThrowAsJavaScriptException();
 //            throw "Object does not have join field";
         }
     }
 }
 
-bool FieldValuesEqual(Napi::Env &env, Napi::Object obj1, Napi::Object obj2, map<string, string> fields){
-    for (auto it = fields.begin(); it != fields.end() ; ++it) {
+bool FieldValuesEqual(Napi::Env &env, Napi::Object obj1, Napi::Object obj2, map <string, string> fields) {
+//    cout << "fields size: " << fields.size() << endl;
+    for (auto it = fields.begin(); it != fields.end(); it++) {
         Napi::String first = Napi::String::New(env, it->first);
         Napi::String second = Napi::String::New(env, it->second);
+//        cout << "first: " << first.Utf8Value() << " :: second: " << second.Utf8Value() << endl;
+//        cout << "first: " << obj1.Get(first).ToString().Utf8Value() << " :: second: " << obj2.Get(second).ToString().Utf8Value() << endl << endl;
         if (obj1.Get(first) != obj2.Get(second)) {
             return false;
         }
     }
     return true;
 }
-Napi::Object JoinObjects(Napi::Env &env, Napi::Object obj1, Napi::Object obj2){
-    Array props = obj1.GetPropertyNames();
-    cout << "props length : " << props.Length() << endl;
+
+Napi::Object JoinObjects(Napi::Env &env, Napi::Object obj1, Napi::Object obj2) {
+    Array props = obj2.GetPropertyNames();
     for (size_t i = 0; i < props.Length(); ++i) {
-//        cout << props.Get(i).Type() << endl;
-//        cout << props.Get(i).As<Napi::String>().Utf8Value() << obj1.Get(props.Get(i)).As<Napi::String>().Utf8Value() << endl;
+        obj1.Set(props.Get(i), obj2.Get(props.Get(i)));
     }
     return obj1;
 }
 
 
 string JoinTables(Napi::Env &env, vector <Napi::Value> &tables, Join join) {
-    cout << "tables len - " << tables.size() << endl;
     Napi::Array t1 = tables[join.GetFirstTable()].As<Napi::Array>();
     Napi::Array t2 = tables[join.GetSecondTable()].As<Napi::Array>();
 
-    cout << join.GetOrigSql() << endl;
-    cout << join.GetFirstTable() << ".Length() " << t1.Length() << endl;
-    cout << join.GetSecondTable() << ".Length() " << t2.Length() << endl;
+//    cout << join.GetOrigSql() << endl;
+//    cout << join.GetFirstTable() << ".Length() " << t1.Length() << endl;
+//    cout << join.GetSecondTable() << ".Length() " << t2.Length() << endl;
 
 
+    vector <Object> joinedObjects;
+
+
+    int matched = 0;
     for (size_t i = 0; i < t1.Length(); ++i) {
-        Napi::Object obj1 = t1.Get(i).As<Napi::Object>();
-        currentTable = join.GetFirstTable();
+        Object obj1 = t1.Get(i).As<Object>();
         hasJoinFields(env, obj1, join.GetJoinFields(), true);
         for (size_t j = 0; j < t2.Length(); ++j) {
-            currentTable = join.GetSecondTable();
-            Napi::Object obj2 = t2.Get(i).As<Napi::Object>();
+            Object obj2 = t2.Get(j).As<Object>();
             hasJoinFields(env, obj2, join.GetJoinFields(), false);
-            if(FieldValuesEqual(env, obj1, obj2, join.GetJoinFields())) {
-                Object tmp = JoinObjects(env, obj1, obj2);
-            }
 
+            if (FieldValuesEqual(env, obj1, obj2, join.GetJoinFields())) {
+                matched++;
+                Object tmp = JoinObjects(env, obj1, obj2);
+                joinedObjects.push_back(tmp);
+            }
         }
-//        cout << (t1.Get(i).IsObject()) << endl;
     }
+    cout << "matched " << matched << endl;
+    Napi::Array outputArray = Napi::Array::New(env, matched);
+    for (size_t i = 0; i < matched; i++) {
+        outputArray[i] = joinedObjects[i];
+    }
+    tables[join.GetFirstTable()] = outputArray;
+    tables.pop_back();
+
     return "";
 }
 
-Napi::String CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
+Napi::Array CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
 
     String sql = info[0].As<String>();
@@ -225,7 +236,6 @@ Napi::String CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
         Napi::Value arr = arrays.Get(i);
         if (!arr.IsArray()) {
             Napi::TypeError::New(env, "array expected").ThrowAsJavaScriptException();
-            return Napi::String::New(env, "");
         }
         tables.push_back(arr);
     }
@@ -235,10 +245,8 @@ Napi::String CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
     }
 
 
-    cout << "tables length: " << tables.size() << endl;
-    Napi::String returnValue = Napi::String::New(env, "hello 2");
 
-    return returnValue;
+    return tables[0].As<Array>();
 
 
 
