@@ -17,3 +17,16 @@ string util::rtrim(const string &s) {
 string util::trim(const string &s) {
     return rtrim(ltrim(s));
 }
+
+vector<Napi::Array> util::getJsonVector(Napi::Env &env, Napi::Array arrays) {
+    // loop over outer array, outer array holds a number of result sets (tables)
+    vector <Napi::Array> tables;
+    for (size_t i = 0; i < arrays.Length(); ++i) {
+        Napi::Array arr = arrays.Get(i).As<Napi::Array>();
+        if (!arr.IsArray()) {
+            Napi::TypeError::New(env, "array expected").ThrowAsJavaScriptException();
+        }
+        tables.push_back(arr);
+    }
+    return tables;
+}

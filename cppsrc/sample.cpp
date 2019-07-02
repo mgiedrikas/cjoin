@@ -1,4 +1,5 @@
 #include "sample.h"
+#include <napi.h>
 #include <vector>
 //#include "include/hsql/SQLParser.h"
 //#include "include/hsql/util/sqlhelper.h"
@@ -9,6 +10,10 @@
 #include "Join.h"
 #include <algorithm>
 #include "Util.h"
+#include <time.h>
+#include <thread>
+#include "include/xxHash/xxhash.h"
+
 
 using namespace std;
 using namespace Napi;
@@ -41,11 +46,6 @@ vector <string> split(const string &s, char delim) {
     return result;
 }
 
-
-Napi::Object CJoin::Init(Napi::Env env, Napi::Object exports) {
-    exports.Set("join", Napi::Function::New(env, JoinWrapper));
-    return exports;
-}
 
 map <string, map<string, string>> parseSqlFieldMappings(string sql) {
     // table (t1, t2..) -> field as Field
@@ -413,6 +413,9 @@ Array mapArraysFieldNames(Env &env, Array res, map <string, string> mappings) {
 }
 
 Napi::Array CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
+    int start = clock();
+    int end2 = clock();
+    cout << "Execution time: " << (end2 - start)/double(CLOCKS_PER_SEC) << endl;
     Napi::Env env = info.Env();
 
     String sql = info[0].As<String>();
@@ -440,6 +443,57 @@ Napi::Array CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
 
 
     Array res = tables[0].As<Array>();
+    int end = clock();
+    cout << "Execution time: " << (end - start)/double(CLOCKS_PER_SEC) << endl;
     return mapArraysFieldNames(env, res, fMappings);;
 }
 
+unsigned long long hashValue(const void* buffer, size_t length)
+{
+    unsigned long long const seed = 0;   /* or any other value */
+    unsigned long long const hash = XXH64(buffer, length, seed);
+    return hash;
+}
+
+void hashTable(int idx, map<int, map<long, Object>> &resMap, Array &array) {
+    string s = "Mazvydas Giedrikas:123";
+    unsigned long long h = hashValue(&s, s.length());
+    cout << h << endl;
+}
+
+Array HashJoin(const CallbackInfo &info) {
+    int start = clock();
+    Env env = info.Env();
+
+    string sql = info[0].As<String>().Utf8Value();
+    Array arrays = info[1].As<Array>();
+
+    vector <Array> tables = util::getJsonVector(env, arrays);
+    map <string, string> fMappings = parseSqlFieldMappingsAll(sql);
+    vector <Join> joins = parseSqlGetJoins(sql);
+
+    // hash tables using join field values
+    map<int, map<long, Object>> resMap;
+    thread threads[20];
+    for (int i = 0; i < tables.size(); ++i) {
+//        threads[i] = thread(hashTable, i, resMap, tables[i]);
+        hashTable( i, resMap, tables[i]);
+    }
+
+//    for (int i = 0; i < tables.size(); ++i) {
+//        threads[i].join();
+//    }
+
+    // store tblIdx ->   map { hash -> obj, hash -> obj }
+
+
+
+
+    Array outputArray = Array::New(env);
+    return outputArray;
+}
+
+Napi::Object CJoin::Init(Napi::Env env, Napi::Object exports) {
+    exports.Set("join", Napi::Function::New(env, HashJoin));
+    return exports;
+}
