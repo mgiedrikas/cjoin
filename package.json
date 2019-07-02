@@ -28,6 +28,8 @@
     "watch": "^1.0.2"
   },
   "dependencies": {
-    "node-addon-api": "^1.6.3"
+    "alasql": "^0.4.11",
+    "node-addon-api": "^1.6.3",
+    "underscore": "^1.9.1"
   }
 }
