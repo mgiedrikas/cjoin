@@ -15,7 +15,8 @@
 #include <unordered_map>
 
 void
-JoinTablesHash(Napi::Env &env, vector<Napi::Array> &tables, map<int, map<string, Napi::Reference<Napi::Object>>> &hashMap, Join join);
+JoinTablesHash(Napi::Env &env, vector<Napi::Array> &tables,
+               map<int, map<string, Napi::Reference<Napi::Object>>> &hashMap, Join join);
 
 using namespace std;
 using namespace Napi;
@@ -155,7 +156,7 @@ vector<Join> parseSqlGetJoins(Napi::Env &env, string sql, map<int, vector<string
     size_t i = v.size();
     vector<string>::reverse_iterator it;
     for (it = v.rbegin(); i > 1; it++, i--) {
-        cout << *it << endl;
+//        cout << *it << endl;
         delim = checkSqlHasOn(*it, env);
         vector<string> v = split(*it, delim);
 
@@ -170,8 +171,8 @@ vector<Join> parseSqlGetJoins(Napi::Env &env, string sql, map<int, vector<string
         delim = checkSqlHasAnd(v[1], env);
         vector<string> v2 = split(v[1], delim);
         map<string, string> joinFields;
-        for (auto i : v2) {
-            joinFields.insert(getJoinPair(i));
+        for (auto val : v2) {
+            joinFields.insert(getJoinPair(val));
         }
         join.SetJoinFields(joinFields);
 
@@ -428,8 +429,7 @@ Array mapArraysFieldNames(Env &env, Array res, map<string, string> mappings) {
 
 Napi::Array CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
     int start = clock();
-    int end2 = clock();
-    cout << "Execution time: " << (end2 - start) / double(CLOCKS_PER_SEC) << endl;
+
     Napi::Env env = info.Env();
 
     String sql = info[0].As<String>();
@@ -460,14 +460,14 @@ Napi::Array CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
     Array res = tables[0].As<Array>();
     int end = clock();
     cout << "Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
-    return mapArraysFieldNames(env, res, fMappings);;
+    return mapArraysFieldNames(env, res, fMappings);
 }
 
 void hashJsonTables(Env &env, int idx, map<int, map<string, Reference<Object>>> &hashMap, Array &array,
                     const vector<string> &joinMapping) {
     // for each Object in array
     //   for each join vec in joinMapping -> get joins field values -> concat and put in hashMap
-    cout << array.Length() << endl;
+//    cout << array.Length() << endl;
     for (size_t i = 0; i < array.Length(); ++i) {
         Object o = array.Get(i).As<Object>();
         string key = "";
@@ -488,11 +488,12 @@ void hashJsonTables(Env &env, int idx, map<int, map<string, Reference<Object>>> 
 
     }
 
-    cout << idx << " - t" << idx + 1 << " -  indexing following fields -- hashMap[idx]: " << hashMap[idx].size() << endl;
-    for (string s : joinMapping) {
-        cout << s << ", ";
-    }
-    cout << endl;
+//    cout << idx << " - t" << idx + 1 << " -  indexing following fields -- hashMap[idx]: " << hashMap[idx].size()
+//         << endl;
+//    for (string s : joinMapping) {
+//        cout << s << ", ";
+//    }
+//    cout << endl;
 
 }
 
@@ -546,29 +547,42 @@ Array HashJoin(const CallbackInfo &info) {
 //        threads[i].join();
 //    }
 
-    for (auto it = hashMap.begin(); it != hashMap.end(); it++) {
-        cout << "hashMap[" << it->first << "] size: " << hashMap[it->first].size() << endl;
+//    for (auto it = hashMap.begin(); it != hashMap.end(); it++) {
+//        cout << "hashMap[" << it->first << "] size: " << hashMap[it->first].size() << endl;
 //        for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++) {
 //
 //        }
-    }
+//    }
 
+    for (auto table : tables) {
+        cout << table.Length() << endl;
+    }
+    cout << "-----\n";
     for (auto join : joins) {
         JoinTablesHash(env, tables, hashMap, join);
+        for (auto table : tables) {
+            cout << table.Length() << endl;
+        }
+        cout << "-----\n";
     }
 
 
-    Array outputArray = Array::New(env);
-    return outputArray;
+    int end = clock();
+    cout << "Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+    Array res = tables[0];
+
+    return mapArraysFieldNames(env, res, fMappings);;
 }
 
 void JoinTablesHash(Env &env, vector<Array> &tables, map<int, map<string, Reference<Object>>> &hashMap, Join join) {
-    cout << "Joining tables " << endl;
-    cout << join.GetOrigSql() << endl;
+//    cout << "Joining tables " << endl;
+//    cout << join.GetOrigSql() << endl;
     int matched = 0;
 
     int tblIdx = join.GetSecondTable();
     Array t = tables[tblIdx];
+    vector<Object> joinedObjects;
+    map<string, int> addedToRes;
     for (size_t i = 0; i < t.Length(); ++i) {
         Object o = t.Get(i).As<Object>();
 
@@ -578,9 +592,28 @@ void JoinTablesHash(Env &env, vector<Array> &tables, map<int, map<string, Refere
                 TypeError::New(env, s + " not found in object").ThrowAsJavaScriptException();
             }
             key += util::trim(s) + util::trim(o.Get(s).ToString().Utf8Value());
-            if (hashMap[join.GetFirstTable()].count(key) > 0) {
+            if (hashMap[join.GetFirstTable()].count(key) > 0 && addedToRes.count(key) == 0) {
+//                cout << key << endl;
+                addedToRes[key] = 1;
                 Object theObject = hashMap[join.GetFirstTable()].find(key)->second.Value();
                 Object joined = JoinObjects(env, theObject, o, join);
+                joinedObjects.push_back(joined);
+
+//                cout << "joined successully" << endl;
+//                Array props = joined.GetPropertyNames();
+//
+//                for (size_t j = 0; j < props.Length(); ++j) {
+//                    Value p = props.Get(j);
+//                    cout << p.ToString().Utf8Value() << ": "<< joined.Get(p).ToString().Utf8Value() << endl;
+//                }
+//                cout << endl;
+                matched++;
+            } else if (hashMap[join.GetSecondTable()].count(key) > 0 && addedToRes.count(key) == 0) {
+//                cout << key << endl;
+                addedToRes[key] = 1;
+                Object theObject = hashMap[join.GetSecondTable()].find(key)->second.Value();
+                Object joined = JoinObjects(env, theObject, o, join);
+                joinedObjects.push_back(joined);
 
 //                cout << "joined successully" << endl;
 //                Array props = joined.GetPropertyNames();
@@ -594,8 +627,20 @@ void JoinTablesHash(Env &env, vector<Array> &tables, map<int, map<string, Refere
             }
         }
     }
-    cout << "matched records: " << matched << endl;
-    cout << endl;
+//    cout << "matched records: " << matched << endl;
+//    cout << endl;
+
+    Napi::Array outputArray = Napi::Array::New(env, matched);
+    for (size_t i = 0; i < matched; i++) {
+        outputArray[i] = joinedObjects[i];
+    }
+    tables[join.GetFirstTable()] = outputArray;
+
+    cout << "inside join tables - joinedObjects: " << joinedObjects.size() << endl;
+    for (auto table : tables) {
+        cout << table.Length() << endl;
+    }
+    cout << "++++++++"<< endl;
 }
 
 Napi::Object CJoin::Init(Napi::Env env, Napi::Object exports) {
