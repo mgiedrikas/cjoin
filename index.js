@@ -14,3 +14,8 @@ module.exports.testNum = function(number, locale) {
 const testAddon = require('./build/Release/cjoin.node');
 
 module.exports.testAddon = testAddon;
+
+
+// "defines": [
+//     "NAPI_DISABLE_CPP_EXCEPTIONS"
+// ]

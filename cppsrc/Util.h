@@ -17,4 +17,6 @@ namespace util {
     string rtrim(const string& s);
     string trim(const string& s);
     vector<Napi::Array> getJsonVector(Napi::Env &env, Napi::Array arrays);
+    vector <string> split(string s, string delimiter);
+
 }

@@ -3,10 +3,10 @@
     {
       "target_name": "cjoin",
       "cflags!": [
-        "-fno-exceptions"
+        "-fexceptions",
       ],
       "cflags_cc!": [
-        "-fno-exceptions"
+        "-fexceptions",
       ],
       "sources": [
         "cppsrc/main.cpp",
@@ -17,15 +17,19 @@
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
-      "libraries": [
-       '-lE:/--- Dev ---/node/cjoin/cppsrc/include/libxxhash.dll.a'
-       ],
+      "libraries": [       ],
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"
       ],
       "defines": [
-        "NAPI_DISABLE_CPP_EXCEPTIONS"
-      ]
+        "NAPI_CPP_EXCEPTIONS"
+      ],
+       'msvs_settings': {
+          'VCCLCompilerTool': { 'ExceptionHandling': 1 },
+        },
+        'conditions': [
+          ['OS=="win"', { 'defines': [ '_HAS_EXCEPTIONS=1' ] }]
+        ]
     }
   ]
 }
