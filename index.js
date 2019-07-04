@@ -1,19 +1,8 @@
 'use strict';
 
-/**
- * Adds commas to a number
- * @param {number} number
- * @param {string} locale
- * @return {string}
- */
-module.exports.testNum = function(number, locale) {
-    return number.toLocaleString(locale);
-};
+const cjoin = require('./build/Release/cjoin.node');
 
-
-const testAddon = require('./build/Release/cjoin.node');
-
-module.exports.testAddon = testAddon;
+module.exports = cjoin;
 
 
 // "defines": [

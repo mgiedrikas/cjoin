@@ -4,11 +4,11 @@
 
 #include "Join.h"
 
-size_t Join::GetFirstTable() {
+size_t Join::GetFirstTableIdx() {
     return this->firstTable;
 }
 
-size_t Join::GetSecondTable() {
+size_t Join::GetSecondTableIdx() {
     return this->secondTable;
 }
 
@@ -52,10 +52,18 @@ void Join::SetJoinFieldsSecondTable(vector<string> f) {
     this->joinFieldsSecondTable = f;
 }
 
-void Join::AddJoinFieldFirstTable(string f) {
-    this->joinFieldsFirstTable.push_back(f);
+vector<Napi::Object> Join::GetJoinedObjects() {
+    return this->joinedObjects;
 }
 
-void Join::AddJoinFieldSecondTable(string f) {
-    this->joinFieldsSecondTable.push_back(f);
+void Join::SetGetJoinedObjects(vector<Napi::Object> f) {
+    this->joinedObjects = f;
 }
+
+//map<string, Napi::Reference<Napi::Object>> Join::GetHashMap() {
+//    return this->hashMapFirstTable;
+//}
+//
+//void Join::SetHashMap(map<string, Napi::Reference<Napi::Object>> m) {
+//    this->hashMapFirstTable = m;
+//}

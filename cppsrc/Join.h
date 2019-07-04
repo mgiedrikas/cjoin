@@ -7,7 +7,7 @@
 #include <string>
 #include <map>
 #include <vector>
-
+#include <napi.h>
 using namespace std;
 
 class Join {
@@ -18,14 +18,18 @@ private:
     map<string, string> joinFields;
     vector<string> joinFieldsFirstTable;
     vector<string> joinFieldsSecondTable;
+    vector<Napi::Object> joinedObjects;
+//    map<string, Napi::Reference<Napi::Object>> hashMapFirstTable ;
 
 public:
     string GetOrigSql();
-    size_t GetFirstTable();
-    size_t GetSecondTable();
+    size_t GetFirstTableIdx();
+    size_t GetSecondTableIdx();
     map<string, string> GetJoinFields();
     vector<string> GetJoinFieldsFirstTable();
     vector<string> GetJoinFieldsSecondTable();
+    vector<Napi::Object> GetJoinedObjects();
+//    map<string, Napi::Reference<Napi::Object>> GetHashMap();
 
     void SetOrigSql(string sql);
     void SetFirstTable(size_t t);
@@ -33,8 +37,8 @@ public:
     void SetJoinFields(map<string, string> f);
     void SetJoinFieldsFirstTable(vector<string> f);
     void SetJoinFieldsSecondTable(vector<string> f);
-    void AddJoinFieldFirstTable(string f);
-    void AddJoinFieldSecondTable(string f);
+    void SetGetJoinedObjects(vector<Napi::Object> f);
+//    void SetHashMap(map<string, Napi::Reference<Napi::Object>> m);
 };
 
 
