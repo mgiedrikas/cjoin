@@ -30,3 +30,15 @@ vector<Napi::Array> util::getJsonVector(Napi::Env &env, Napi::Array arrays) {
     }
     return tables;
 }
+
+//    cout << "tables[tables.size() - 1] size -- " << tables[tables.size() - 1].Length() << endl;
+//    Array r = tables[tables.size() - 1];
+//    for (int i = 0; i < 1; ++i) {
+//        Object o = r.Get(i).ToObject();
+//        Array props = o.GetPropertyNames();
+//        for (int j = 0; j < props.Length(); ++j) {
+//            cout << props.Get(j).ToString().Utf8Value() << ": " <<  o.Get(props.Get(j)).ToString().Utf8Value() << endl;
+//        }
+//        cout << endl;
+//        cout << endl;
+//    }
