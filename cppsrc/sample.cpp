@@ -463,8 +463,7 @@ Napi::Array CJoin::JoinWrapper(const Napi::CallbackInfo &info) {
     return mapArraysFieldNames(env, res, fMappings);
 }
 
-void hashJsonTables(Env &env, int idx, map<int, map<string, Reference<Object>>> &hashMap, Array &array,
-                    const vector<string> &joinMapping) {
+void hashJsonTables(Env &env, int idx, map<int, map<string, Reference<Object>>> &hashMap, Array &array) {
     // for each Object in array
     //   for each join vec in joinMapping -> get joins field values -> concat and put in hashMap
 //    cout << array.Length() << endl;
@@ -535,12 +534,10 @@ Array HashJoin(const CallbackInfo &info) {
     // build hash tables using join field values
     map<int, map<string, Reference<Object>>> hashMap;
     thread threads[10];
-    for (auto join : joins) {
+    for (size_t i=0; i < tables.size(); i++) {
 //        threads[i] = thread(hashJsonTables, env, i, hashMap, tables[i], tblJoinFields[i]);
-        hashJsonTables(env, join.GetFirstTable(), hashMap, tables[join.GetFirstTable()],
-                       join.GetJoinFieldsFirstTable());
-        hashJsonTables(env, join.GetSecondTable(), hashMap, tables[join.GetSecondTable()],
-                       join.GetJoinFieldsSecondTable());
+        hashJsonTables(env, i, hashMap, tables[i]);
+
     }
 
 //    for (int i = 0; i < tables.size(); ++i) {
