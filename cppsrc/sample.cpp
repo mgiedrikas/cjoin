@@ -86,6 +86,7 @@ map<size_t, map<string, string>> parseSqlFieldMappings(string sql) {
 }
 
 map<string, string> parseSqlFieldMappingsAll(string sql) {
+    int start = clock();
     // table (t1, t2..) -> field as Field
     map<string, string> fieldMappings;
     // check if distinct keyword is in sql
@@ -104,6 +105,8 @@ map<string, string> parseSqlFieldMappingsAll(string sql) {
         vector<string> v4 = split(i, " AS ");
         fieldMappings[v4[0]] = v4[1];
     }
+    int end = clock();
+    cout << "parseSqlFieldMappingsAll Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return fieldMappings;
 }
 
@@ -148,6 +151,7 @@ string checkSqlHasAnd(string sql, Napi::Env &env) {
 }
 
 vector<Join> parseSqlGetJoins(Napi::Env &env, string sql) {
+    int start = clock();
     vector<Join> joins;
     string delim = checkSqlHasJoin(sql, env);
     vector<string> v = split(sql, delim);
@@ -174,6 +178,8 @@ vector<Join> parseSqlGetJoins(Napi::Env &env, string sql) {
         join.SetJoinFields(joinFields);
         joins.push_back(join);
     }
+    int end = clock();
+    cout << "parseSqlGetJoins Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return joins;
 }
 
@@ -284,6 +290,7 @@ Object JoinObjects(Env &env, Object obj1, Object obj2, const Join& join, int tbl
 }
 
 Array mapArraysFieldNames(Env &env, Array res, map<string, string> mappings, int length) {
+    int start = clock();
     Napi::Array outputArray = Napi::Array::New(env, res.Length());
     for (uint32_t i = 0; i < res.Length(); i++) {
         Object newObj = Object::New(env);
@@ -321,6 +328,8 @@ Array mapArraysFieldNames(Env &env, Array res, map<string, string> mappings, int
         outputArray[i] = newObj;
     }
 
+    int end = clock();
+    cout << "mapArraysFieldNames Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return outputArray;
 }
 
@@ -345,10 +354,8 @@ void hashTable(Env &env, Array array, vector<string> joinMapping, map<string, Re
 }
 
 Array hashAndJoin(Env &env, vector<Array> &tables, Join &join) {
-    // 1. Pass Join as a param
+    int start = clock();
 
-    // 3. loop over larger and check if there is a match
-    // 4. store result array in Join
     size_t firstTblIdx = join.GetFirstTableIdx();
     size_t secondTblIdx = join.GetSecondTableIdx();
 
@@ -439,11 +446,13 @@ Array hashAndJoin(Env &env, vector<Array> &tables, Join &join) {
     for (auto i = 0; i < matched; i++) {
         outputArray[i] = joinedObjects[i];
     }
-
+    int end = clock();
+    cout << "hashAndJoin Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return tables[join.GetSecondTableIdx()] = outputArray;
 }
 
 map<int, vector<vector<string>>> getTblJoinsMapping(vector<Join> &joins) {
+    int start = clock();
     map<int, vector<vector<string>>> tblJoinFields;
     for (auto &&join : joins) {
         map<string, string> jFields = join.GetJoinFields();
@@ -459,6 +468,8 @@ map<int, vector<vector<string>>> getTblJoinsMapping(vector<Join> &joins) {
         join.SetJoinFieldsFirstTable(v1);
         join.SetJoinFieldsSecondTable(v2);
     }
+    int end = clock();
+    cout << "getTblJoinsMapping Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return tblJoinFields;
 }
 
@@ -490,6 +501,7 @@ Array vectorToNapiArray(Env &env, vector<Object> v) {
 }
 
 Array getDistinct(Env &env, Array table) {
+    int start = clock();
     vector<Object> distinct;
     uint32_t idx = 0;
     Array props = table.Get(idx).ToObject().GetPropertyNames();
@@ -505,6 +517,8 @@ Array getDistinct(Env &env, Array table) {
             added[key] = 1;
         }
     }
+    int end = clock();
+    cout << "getDistinct Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return vectorToNapiArray(env, distinct);
 }
 
@@ -520,6 +534,7 @@ Array HashJoin(const CallbackInfo &info) {
     map<string, string> fMappings = parseSqlFieldMappingsAll(sql);
     vector<Join> joins = parseSqlGetJoins(env, sql);
     getTblJoinsMapping(joins);
+
 
     for (auto join : joins) {
         hashAndJoin(env, tables, join);

@@ -3838,44 +3838,58 @@ describe('#lib.testNum', function () {
 
     describe('#lib.c++', function () {
         it('should call c++ method and print js array', function () {
+            this.timeout(200000);
+            // let sql = "select distinct t1.btchNum AS Batch_Number, t1.matlNum AS Material_Number, t1.plntCd AS Plant_Code, t1.srcSysCd AS Source_System, t1.batchType AS Type_Of_Batch, t1.supBtchNum AS Vendor_Batch_Number, t1.supNum AS Vendor_Account_Number, t1.availDt AS Availability_Date, t1.btchExpDt AS Shelf_Life_Expiration_Or_Best_Before_Date, t1.btchLastGr AS Date_Of_Last_Goods_Receipt, t1.btchLastSts AS Date_Of_Last_Status_Change, t1.btchMfgDt AS Date_Of_Manufacture, t1.crtDttm AS Created_On, t1.parentCode AS Parent_Code, t1.btchStsCd AS Batch_In_Restricted_Use_Stock, t1.chgDttm AS Date_Of_Last_Change, t1.delInd AS Deletion_Flag_For_All_Data_On_A_Batch_At_A_Plant, t1.lotGrade AS Lot_Grade, t2.btchNum AS Batch_Number, t2.parentCode AS Original_Batch_Parent_Code, t2.matlNum AS Material_Number, t2.plntCd AS Plant_Code, t2.srcSysCd AS Source_System, t2.entrpMaterial AS Enterprise_Material_Number, t2.crtDttm AS Original_Batch_Created_On FROM ? t1  JOIN ? t2 ON t1.srcSysCd = t2.srcSysCd and t1.plntCd = t2.plntCd and t1.matlNum = t2.matlNum and t1.btchNum = t2.btchNum";
+            // let arrays = [
+            //     readJson("test/data/batch/1.json"),
+            //     readJson("test/data/batch/2.json")
+            // ];
 
-            let sql = "select distinct t1.btchNum AS Batch_Number, t1.matlNum AS Material_Number, t1.plntCd AS Plant_Code, t1.srcSysCd AS Source_System, t1.batchType AS Type_Of_Batch, t1.supBtchNum AS Vendor_Batch_Number, t1.supNum AS Vendor_Account_Number, t1.availDt AS Availability_Date, t1.btchExpDt AS Shelf_Life_Expiration_Or_Best_Before_Date, t1.btchLastGr AS Date_Of_Last_Goods_Receipt, t1.btchLastSts AS Date_Of_Last_Status_Change, t1.btchMfgDt AS Date_Of_Manufacture, t1.crtDttm AS Created_On, t1.parentCode AS Parent_Code, t1.btchStsCd AS Batch_In_Restricted_Use_Stock, t1.chgDttm AS Date_Of_Last_Change, t1.delInd AS Deletion_Flag_For_All_Data_On_A_Batch_At_A_Plant, t1.lotGrade AS Lot_Grade, t2.btchNum AS Batch_Number, t2.parentCode AS Original_Batch_Parent_Code, t2.matlNum AS Material_Number, t2.plntCd AS Plant_Code, t2.srcSysCd AS Source_System, t2.entrpMaterial AS Enterprise_Material_Number, t2.crtDttm AS Original_Batch_Created_On FROM ? t1  JOIN ? t2 ON t1.srcSysCd = t2.srcSysCd and t1.plntCd = t2.plntCd and t1.matlNum = t2.matlNum and t1.btchNum = t2.btchNum";
-            let arr = [
-                readJson("test/data/batch/1.json"),
-                readJson("test/data/batch/2.json")
-            ];
-
-           // let sql = "select distinct t1.altBomNum AS Alternative_Bom_Number, t1.bomNum AS Bill_Of_Material_Number, t1.bomUsgCd AS Bom_Usage, t1.chgDttm AS Matl_Bom_Changed_On, t1.crtDttm AS Date_Record_Created_On, t1.fromLotSizeQty AS From_Lot_Size, t1.matlNum AS Material_Number, t1.plntCd AS Plant, t1.srcSysCd AS Source_System, t1.toLotSizeQty AS To_Lot_Size, t2.altBomNum AS Alternative_Bom_Number, t2.bomBaseQty AS Base_Quantity, t2.bomCatCd AS Bom_Category, t2.bomCntrNbr AS Internal_Counter, t2.bomNum AS Bill_Of_Material_Number, t2.bomStsCd AS Bom_Status, t2.bomTxt AS Alternative_Bom_Text, t2.bomUomCd AS Base_Unit_Of_Measure_For_Bom, t2.bomVld_ToDt AS Bom_Hdr_Valid_To_Date, t2.bomVldFromDt AS Bom_Hdr_Valid_From_Date, t2.chgDttm AS Bom_Hdr_Changed_On, t2.chgNum AS Change_Number, t2.crtDttm AS Date_Record_Created_On, t2.delInd AS Bom_Hdr_Deletion_Flag_For_Boms, t2.prevHdrCntrNbr AS Previous_Header_Counter, t2.srcSysCd AS Source_System, t3.altBomNum AS Alternative_Bom_Number, t3.bomCatCd AS Bom_Category, t3.bomItmNodeCntrNbr AS Internal_Counter, t3.bomItmNdeNum AS Bom_Item_Node_Number, t3.bomItmVldFromDt AS Valid_From_Date, t3.bomNum AS Bill_Of_Material_Number, t3.chgDttm AS Changed_On, t3.chgNum AS Change_Number, t3.crtDttm AS Date_Record_Created_On, t3.delInd AS Deletion_Indicator, t3.srcSysCd AS Source_System, t4.altItmGrpCd AS Alternative_Item_Group, t4.altItmInd AS Indicator_Alternative_Item, t4.altItmQtyPct AS Usage_Probability_In_Alternative_Item, t4.altItmRnkngNbr AS Alternative_Item_Ranking_Order, t4.altItmStrtgyCd AS Alternative_Item_Strategy, t4.bomCatCd AS Bom_Category, t4.bomItmBulkInd AS Indicator_Bulk_Material, t4.bomItmCatCd AS Item_Category_Bill_Of_Material, t4.bomItmCntrNbr AS Internal_Counter, t4.bomItmNdeNum AS Bom_Item_Node_Number, t4.bomItmNum AS Bom_Item_Number, t4.bomItmTxt AS Bom_Item_Text_Line_1, t4.bomItmVldFromDt AS Bom_Itm_Valid_From_Date, t4.bomItmVldToDt AS Bom_Itm_Valid_To_Date, t4.bomNum AS Bill_Of_Material_Number, t4.chgDttm AS Bom_Itm_Changed_On, t4.chgNum AS Change_Number, t4.cmpntNum AS Bom_Component, t4.cmpntQty AS Component_Quantity, t4.cmpntScrapQtyPct AS Component_Scrap_In_Percent, t4.cmpntUomCd AS Component_Unit_Of_Measure, t4.coProdInd AS Indicator_Co_Product, t4.crtDttm AS Date_Record_Created_On, t4.delInd AS Bom_Itm_Deletion_Indicator, t4.dstnKeyCd AS Distribution_Key_For_Component_Consumption, t4.fxQtyInd AS Fixed_Qty, t4.grDaysLeadQty AS Goods_Receipt_Processing_Time_In_Days, t4.leadTimeOffstDaysQty AS Lead_Time_Offset, t4.oprScrapQtyPct AS Operation_Scrap, t4.prevItmCntrNbr AS Previous_Item_Counter, t4.prevNodeNum AS Predecessor_Node, t4.srcSysCd AS Source_System FROM ? t1  JOIN ? t2 ON t1.srcSysCd = t2.srcSysCd AND t1.bomNum = t2.bomNum AND t1.altBomNum = t2.altBomNum JOIN ? t3 ON t2.srcSysCd = t3.srcSysCd AND t2.bomNum = t3.bomNum AND t2.altBomNum = t3.altBomNum AND t2.bomCatCd = t3.bomCatCd JOIN ? t4 ON t3.srcSysCd = t4.srcSysCd AND t3.bomNum = t4.bomNum AND t3.bomCatCd = t4.bomCatCd AND t3.bomItmNodeNum = t4.bomItmNodeNum";
-           //  let arr = [
-           //      readJson("test/data/bom/1.json"),
-           //      readJson("test/data/bom/2.json"),
-           //      readJson("test/data/bom/4.json"),
-           //      readJson("test/data/bom/3.json")
-           //  ];
+            // let sql = "select distinct t1.altBomNum AS Alternative_Bom_Number, t1.bomNum AS Bill_Of_Material_Number, t1.bomUsgCd AS Bom_Usage, t1.chgDttm AS Matl_Bom_Changed_On, t1.crtDttm AS Date_Record_Created_On, t1.fromLotSizeQty AS From_Lot_Size, t1.matlNum AS Material_Number, t1.plntCd AS Plant, t1.srcSysCd AS Source_System, t1.toLotSizeQty AS To_Lot_Size, t2.altBomNum AS Alternative_Bom_Number, t2.bomBaseQty AS Base_Quantity, t2.bomCatCd AS Bom_Category, t2.bomCntrNbr AS Internal_Counter, t2.bomNum AS Bill_Of_Material_Number, t2.bomStsCd AS Bom_Status, t2.bomTxt AS Alternative_Bom_Text, t2.bomUomCd AS Base_Unit_Of_Measure_For_Bom, t2.bomVld_ToDt AS Bom_Hdr_Valid_To_Date, t2.bomVldFromDt AS Bom_Hdr_Valid_From_Date, t2.chgDttm AS Bom_Hdr_Changed_On, t2.chgNum AS Change_Number, t2.crtDttm AS Date_Record_Created_On, t2.delInd AS Bom_Hdr_Deletion_Flag_For_Boms, t2.prevHdrCntrNbr AS Previous_Header_Counter, t2.srcSysCd AS Source_System, t3.altBomNum AS Alternative_Bom_Number, t3.bomCatCd AS Bom_Category, t3.bomItmNodeCntrNbr AS Internal_Counter, t3.bomItmNdeNum AS Bom_Item_Node_Number, t3.bomItmVldFromDt AS Valid_From_Date, t3.bomNum AS Bill_Of_Material_Number, t3.chgDttm AS Changed_On, t3.chgNum AS Change_Number, t3.crtDttm AS Date_Record_Created_On, t3.delInd AS Deletion_Indicator, t3.srcSysCd AS Source_System, t4.altItmGrpCd AS Alternative_Item_Group, t4.altItmInd AS Indicator_Alternative_Item, t4.altItmQtyPct AS Usage_Probability_In_Alternative_Item, t4.altItmRnkngNbr AS Alternative_Item_Ranking_Order, t4.altItmStrtgyCd AS Alternative_Item_Strategy, t4.bomCatCd AS Bom_Category, t4.bomItmBulkInd AS Indicator_Bulk_Material, t4.bomItmCatCd AS Item_Category_Bill_Of_Material, t4.bomItmCntrNbr AS Internal_Counter, t4.bomItmNdeNum AS Bom_Item_Node_Number, t4.bomItmNum AS Bom_Item_Number, t4.bomItmTxt AS Bom_Item_Text_Line_1, t4.bomItmVldFromDt AS Bom_Itm_Valid_From_Date, t4.bomItmVldToDt AS Bom_Itm_Valid_To_Date, t4.bomNum AS Bill_Of_Material_Number, t4.chgDttm AS Bom_Itm_Changed_On, t4.chgNum AS Change_Number, t4.cmpntNum AS Bom_Component, t4.cmpntQty AS Component_Quantity, t4.cmpntScrapQtyPct AS Component_Scrap_In_Percent, t4.cmpntUomCd AS Component_Unit_Of_Measure, t4.coProdInd AS Indicator_Co_Product, t4.crtDttm AS Date_Record_Created_On, t4.delInd AS Bom_Itm_Deletion_Indicator, t4.dstnKeyCd AS Distribution_Key_For_Component_Consumption, t4.fxQtyInd AS Fixed_Qty, t4.grDaysLeadQty AS Goods_Receipt_Processing_Time_In_Days, t4.leadTimeOffstDaysQty AS Lead_Time_Offset, t4.oprScrapQtyPct AS Operation_Scrap, t4.prevItmCntrNbr AS Previous_Item_Counter, t4.prevNodeNum AS Predecessor_Node, t4.srcSysCd AS Source_System FROM ? t1  JOIN ? t2 ON t1.srcSysCd = t2.srcSysCd AND t1.bomNum = t2.bomNum AND t1.altBomNum = t2.altBomNum JOIN ? t3 ON t2.srcSysCd = t3.srcSysCd AND t2.bomNum = t3.bomNum AND t2.altBomNum = t3.altBomNum AND t2.bomCatCd = t3.bomCatCd JOIN ? t4 ON t3.srcSysCd = t4.srcSysCd AND t3.bomNum = t4.bomNum AND t3.bomCatCd = t4.bomCatCd AND t3.bomItmNodeNum = t4.bomItmNodeNum";
+            //  let arr = [
+            //      readJson("test/data/bom/1.json"),
+            //      readJson("test/data/bom/2.json"),
+            //      readJson("test/data/bom/4.json"),
+            //      readJson("test/data/bom/3.json")
+            //  ];
 
             // let sql = " select distinct t1.btchNum AS Batch_Number, t1.matlNum AS Material_Number, t1.plntCd AS Plant_Code, t1.srcSysCd AS Source_System, t1.batchType AS Type_Of_Batch, t1.supBtchNum AS Vendor_Batch_Number, t1.supNum AS Vendor_Account_Number, t1.availDt AS Availability_Date, t1.btchExpDt AS Shelf_Life_Expiration_Or_Best_Before_Date, t1.btchLastGr AS Date_Of_Last_Goods_Receipt, t1.btchLastSts AS Date_Of_Last_Status_Change, t1.btchMfgDt AS Date_Of_Manufacture, t1.crtDttm AS Created_On, t1.parentCode AS Parent_Code, t1.btchStsCd AS Batch_In_Restricted_Use_Stock, t1.chgDttm AS Date_Of_Last_Change, t1.delInd AS Deletion_Flag_For_All_Data_On_A_Batch_At_A_Plant, t1.lotGrade AS Lot_Grade, t2.btchNum AS Batch_Number, t2.parentCode AS Original_Batch_Parent_Code, t2.matlNum AS Material_Number, t2.plntCd AS Plant_Code, t2.srcSysCd AS Source_System, t2.entrpMaterial AS Enterprise_Material_Number, t2.crtDttm AS Original_Batch_Created_On FROM ? t1  JOIN ? t2 ON t1.srcSysCd = t2.srcSysCd and t1.plntCd = t2.plntCd and t1.matlNum = t2.matlNum and t1.btchNum = t2.btchNum";
             // let arr = [
             //     readJson("test/data/batch/11.json"),
             //     readJson("test/data/batch/12.json"),
             // ];
+            let sql = "select distinct t1.slsOrdrDocId AS Sales_Order_Document_Id, t1.billBlkCd AS Billing_Block_Cd, t1.chgDttm AS Change_Dttm, t1.companyCd AS Company_Code, t1.crtDttm AS Created_On, t1.custPoNum AS Customer_PO_Num, t1.custPoTypeCd AS Customer_PO_Type_Cd, t1.delvBlkCd AS Delivery_Block_Cd, t1.divisionCd AS Division_Cd, t1.dstrChnlCd AS Distribution_Channel_Cd, t1.ptnrRefCd AS Partner_Reference_Cd, t1.rqstDelvDt AS Requested_Delivery_Dt, t1.salesOrderReasonCd AS Sales_Order_Reason_Cd, t1.salesOrganizationCd AS Sales_Organization_Cd, t1.shippingCondCd AS Shipping_Condition_Cd, t1.slsGrpCd AS Sales_Group, t1.slsOrdrCatCd AS Sales_Order_Category_Cd, t1.slsOrdrTypeCd AS Sales_Order_Type_Cd, t1.slsTerrId AS Sales_Territory, t1.soldToCustNum AS Sold_To_Customer_Num, t1.srcSysCd AS Source_System_Cd, t1.validFrom AS Valid_From, t1.validTo AS Valid_To, t2.billBlkLineCd AS Billing_Block_Line_Cd, t2.billRlvntId AS Billing_Relevant_Ind, t2.cnfrmQty AS Confirmed_Quantity, t2.delRlvntInd AS Delivery_Relevant_Ind, t2.lineItemCatCd AS Line_Item_Category_Cd, t2.matlNum AS Material_Number, t2.netValAmt AS Net_Value_Amt, t2.plntCd AS Plant, t2.rteId AS Route_Number, t2.sLocCd AS Storage_Location, t2.shippingPtId AS Shipping_Point_Num, t2.slsOrdrLineRejRsnCd AS Reject_Reason_Cd, t2.slsUnitOrdrQty AS Sales_Order_Qty_Line, t2.slsUomCd AS Sales_UOM_Code_Line, t2.companyCd AS Company_Code, t2.slsOrdrLineNbr AS Sales_Order_Line_Nbr, t2.slsOrdrTypeCd AS Sales_Order_Type_Cd, t2.srcSysCd AS Source_System_Cd, t2.slsOrdrDocId AS Sales_Order_Document_Id, t2.recommendedDeliveryDateJulian AS Recommended_Delivery_Date, t3.slsOrdrDocId AS Sales_Order_Document_Id, t3.slsOrdrTypeCd AS Sales_Order_Type_Cd, t3.cnfrmQty AS Confirmed_Qty, t3.delvSchedCntNbr AS Delivery_Schedule_Count_Nbr, t3.giDttm AS Goods_Issue_Dttm, t3.matlAvlbltyDttm AS Material_Availability_Dttm, t3.saleDocSchedLineNbr AS Sales_Order_Line_Nbr, t3.slsUnitOrdrQty AS Sales_Order_Qty, t3.slsUomCd AS Sales_UOM_Code, t3.coCd AS Company_Code, t3.srcSysCd AS Source_System_Cd FROM ? t1  JOIN ? t2 ON t1.slsOrdrDocId = t2.slsOrdrDocId AND t1.srcSysCd = t2.srcSysCd AND t1.slsOrdrTypeCd = t2.slsOrdrTypeCd AND t1.companyCd = t2.companyCd JOIN ? t3 ON t2.slsOrdrDocId = t3.slsOrdrDocId AND t2.srcSysCd = t3.srcSysCd AND t2.slsOrdrLineNbr = t3.saleDocSchedLineNbr AND t2.slsOrdrTypeCd = t3.slsOrdrTypeCd AND t2.companyCd = t3.coCd";
+            let arrays = [
+                readJson("test/data/sls/1.json"),
+                readJson("test/data/sls/2.json"),
+                readJson("test/data/sls/3.json"),
+            ];
 
             // for (const o of arr) {
             //     console.log(o.length);
             // }
 
 
-            let res = cJoin.join(sql, arr);
-            let resAla = alasql(sql, arr);
+            let start = new Date().getTime();
+            let res1 = alasql(sql, arrays);
+            let finished = new Date().getTime();
+            let alaTime = finished - start;
 
-            const ordered1 = {};
-            const ordered2 = {};
+            start = new Date().getTime();
+            let res2 = cJoin.join(sql, arrays);
+            finished = new Date().getTime();
+            let cJoinTime = finished - start;
+            console.log(`joins finished - alaSql - ${alaTime}ms vs cJoin - ${cJoinTime}ms`);
 
-            Object.keys(resAla[0]).sort().forEach(function(key) {
-                ordered1[key] = resAla[0][key];
-            });
-              Object.keys(res[0]).sort().forEach(function(key) {
-                  ordered2[key] = res[0][key];
-            });
+            // const ordered1 = {};
+            // const ordered2 = {};
+            //
+            // Object.keys(resAla[0]).sort().forEach(function(key) {
+            //     ordered1[key] = resAla[0][key];
+            // });
+            //   Object.keys(res[0]).sort().forEach(function(key) {
+            //       ordered2[key] = res[0][key];
+            // });
 
 
             // console.log("\n\n", prettyObject(ordered1), "\n\n");
@@ -3884,18 +3898,17 @@ describe('#lib.testNum', function () {
             // console.log(prettyObject(res));
             // console.log(prettyObject(res));
             // console.log(resAla.length)
-            assert.strictEqual(res.length, resAla.length);
+            assert.strictEqual(res1.length, res2.length);
             let i = 0;
-            for (const obj of res) {
+            for (const obj of res2) {
                 // assert.strictEqual(Object.keys(obj).length, 50);
-                if (!checkForMatch(obj, resAla)) {
+                if (!checkForMatch(obj, res1)) {
                     console.log(i);
                     console.log(prettyObject(obj));
                 }
-                 assert.strictEqual(checkForMatch(obj, resAla), true);
+                assert.strictEqual(checkForMatch(obj, res1), true);
                 i++;
             }
-
 
 
         });
