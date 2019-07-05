@@ -21,7 +21,7 @@ string util::trim(const string &s) {
 }
 
 vector<Napi::Array> util::getJsonVector(Napi::Env &env, Napi::Array arrays) {
-    int start = clock();
+//    int start = clock();
     // loop over outer array, outer array holds a number of result sets (tables)
     vector <Napi::Array> tables;
     for (size_t i = 0; i < arrays.Length(); ++i) {
@@ -31,8 +31,8 @@ vector<Napi::Array> util::getJsonVector(Napi::Env &env, Napi::Array arrays) {
         }
         tables.push_back(arr);
     }
-    int end = clock();
-    cout << "util::getJsonVector Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+//    int end = clock();
+//    cout << "util::getJsonVector Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return tables;
 }
 

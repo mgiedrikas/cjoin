@@ -13,6 +13,7 @@
 #include <time.h>
 #include <thread>
 #include <unordered_map>
+#include <chrono>
 
 void
 JoinTablesHash(Napi::Env &env, vector<Napi::Array> &tables,
@@ -21,7 +22,6 @@ JoinTablesHash(Napi::Env &env, vector<Napi::Array> &tables,
 using namespace std;
 using namespace Napi;
 
-// for string delimiter
 vector<string> split(string s, string delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     string token;
@@ -86,7 +86,7 @@ map<size_t, map<string, string>> parseSqlFieldMappings(string sql) {
 }
 
 map<string, string> parseSqlFieldMappingsAll(string sql) {
-    int start = clock();
+//    int start = clock();
     // table (t1, t2..) -> field as Field
     map<string, string> fieldMappings;
     // check if distinct keyword is in sql
@@ -105,16 +105,21 @@ map<string, string> parseSqlFieldMappingsAll(string sql) {
         vector<string> v4 = split(i, " AS ");
         fieldMappings[v4[0]] = v4[1];
     }
-    int end = clock();
-    cout << "parseSqlFieldMappingsAll Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+//    int end = clock();
+//    cout << "parseSqlFieldMappingsAll Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return fieldMappings;
 }
 
-pair<string, string> getJoinPair(string s) {
+void getJoinPair(string s, vector<string> &j1, vector<string> &j2, map<string, int> &joinMap) {
     vector<string> v = split(s, " = ");
     string s1 = split(v[0], '.')[1];
     string s2 = split(v[1], '.')[1];
-    return make_pair(util::trim(s1), util::trim(s2));
+    string ss1 = util::trim(s1);
+    string ss2 = util::trim(s2);
+    j1.push_back(ss1);
+    j2.push_back(ss2);
+    joinMap[ss1] = 1;
+    joinMap[ss2] = 1;
 }
 
 string checkSqlHasJoin(string sql, Napi::Env &env) {
@@ -150,13 +155,13 @@ string checkSqlHasAnd(string sql, Napi::Env &env) {
     return delimiter;
 }
 
-vector<Join> parseSqlGetJoins(Napi::Env &env, string sql) {
-    int start = clock();
+vector<Join> parseSqlGetJoins(Napi::Env &env, string sql, map<string, int> &joinMap) {
+//    int start = clock();
     vector<Join> joins;
     string delim = checkSqlHasJoin(sql, env);
     vector<string> v = split(sql, delim);
     v.erase(v.begin());
-    for (auto & it : v) {
+    for (auto &it : v) {
 //        cout << *it << endl;
         delim = checkSqlHasOn(it, env);
         vector<string> v = split(it, delim);
@@ -172,14 +177,16 @@ vector<Join> parseSqlGetJoins(Napi::Env &env, string sql) {
         delim = checkSqlHasAnd(v[1], env);
         vector<string> v2 = split(v[1], delim);
         map<string, string> joinFields;
+        vector<string> joinFields1, joinFields2;
         for (auto val : v2) {
-            joinFields.insert(getJoinPair(val));
+            getJoinPair(val, joinFields1, joinFields2, joinMap);
         }
-        join.SetJoinFields(joinFields);
+        join.SetJoinFieldsFirstTable(joinFields1);
+        join.SetJoinFieldsSecondTable(joinFields2);
         joins.push_back(join);
     }
-    int end = clock();
-    cout << "parseSqlGetJoins Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+//    int end = clock();
+//    cout << "parseSqlGetJoins Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return joins;
 }
 
@@ -199,141 +206,51 @@ void printFieldMappingsAll(map<string, string> fieldMappings) {
     }
 }
 
-void hasJoinFields(Napi::Env &env, Napi::Object t, map<string, string> fields, bool first, size_t tableIdx) {
-    string idx = "t" + to_string(tableIdx + 1) + ".";
-    for (auto it = fields.begin(); it != fields.end(); it++) {
-        string f = first ? it->first : it->second;
-        if (!t.Has(f)) {
-            string f2 = idx + f;
-            if (!t.Has(f2)) {
-                cout << f << "::" << f2 << " --------------------  not in tbl " << endl;
-//                Array props = t.GetPropertyNames();
-//                for (int i = 0; i < props.Length(); ++i) {
-//                    cout << props.Get(i).ToString().Utf8Value() << ", " << t.Get(props.Get(i)).ToString().Utf8Value() << endl;
-//                }
-            }
-        }
-    }
-}
-
-bool FieldValuesEqual(Napi::Env &env, Napi::Object obj1, Napi::Object obj2, Join join) {
-    string idx1 = "t" + to_string(join.GetFirstTableIdx() + 1) + ".";
-    string idx2 = "t" + to_string(join.GetSecondTableIdx() + 1) + ".";
-    map<string, string> joinFields = join.GetJoinFields();
-    for (auto it = joinFields.begin(); it != joinFields.end(); it++) {
-//        Napi::String first = Napi::String::New(env, it->first);
-//        Napi::String second = Napi::String::New(env, it->second);
-        string first = obj1.Has(it->first) ? it->first : idx1 + it->first;
-        string second = obj1.Has(it->second) ? it->second : idx2 + it->second;
-
-
-        string v1 = obj1.Get(first).ToString().Utf8Value();
-        string v2 = obj2.Get(second).ToString().Utf8Value();
-
-        if (obj1.Get(first) != obj2.Get(second)) {
-//            cout << first << ": " << v1 << " - " << second << ": " << v2 << endl;
-            return false;
-        }
-    }
-    return true;
-}
-
-bool isJoinField(String prop, Join join) {
-    auto m = join.GetJoinFields();
-    for (auto it = m.begin(); it != m.end(); it++) {
-        if (it->second == prop.ToString().Utf8Value()) {
-            return true;
-        }
-    }
-    return false;
-}
-
-Object removeObjectFields(Object obj) {
-    obj.Delete("_DELETED_");
-    obj.Delete("_INST_");
-    obj.Delete("_INSUN_");
-    obj.Delete("_MR_PK_");
-    obj.Delete("_UPT_");
-    obj.Delete("_UPUN_");
-    return obj;
-}
-
-Object JoinObjects(Env &env, Object obj1, Object obj2, const Join& join, int tblIdx) {
-    obj1 = removeObjectFields(obj1);
-    obj2 = removeObjectFields(obj2);
-    Array props = obj1.GetPropertyNames();
-
+Object &JoinObjects(Env &env, Object &obj1, Object &obj2, const Join &join, int tblIdx) {
+//    auto start = std::chrono::high_resolution_clock::now();
+//    obj1 = removeObjectFields(obj1);
+//    obj2 = removeObjectFields(obj2);
+//    Array props = obj1.GetPropertyNames();
     string t = "t" + to_string(tblIdx + 1);
 
-
-    for (size_t i = 0; i < props.Length(); ++i) {
-        Value p = props.Get(i);
-        string key = t + "." + p.ToString().Utf8Value();
-
-        if (obj2.Has(p)) {
-            if (isJoinField(p.ToString(), join) && obj2.Get(p) != obj1.Get(p)) {
-                TypeError::New(env, "isJoinField --> obj1.Get(p) != obj2.Get(p)").ThrowAsJavaScriptException();
-            } else if (p.ToString().Utf8Value().find('.') == string::npos) {
-//                cout << "is NOT JoinField(p.ToString())" << p.ToString().Utf8Value() << endl;
-                obj2.Set(key, obj1.Get(p));
-
-            }
-        } else {
-            if (p.ToString().Utf8Value().find('.') == string::npos) {
-                obj2.Set(key, obj1.Get(p));
-            } else {
-                obj2.Set(p, obj1.Get(p));
-            }
-        }
+    if (obj1.Has("joins")) {
+        Object o = obj1.Get("joins").ToObject();
+        o.Set(t, obj1);
+        obj2.Set("joins", o);
+    } else {
+        Object o = Object::New(env);
+        o.Set(t, obj1);
+        obj2.Set("joins", o);
     }
+
+
+
+//    for (size_t i = 0; i < props.Length(); ++i) {
+//        Value p = props[i];
+//        string pStr = p.ToString().Utf8Value();
+//        string key = t + "." + pStr;
+//        Value val = obj1.Get(p);
+//        if (obj2.Has(p)) {
+//            if (!isJoinField(pStr, join) && pStr.find('.') == string::npos) {
+//                obj2.Set(key, val);
+//            }
+//        } else {
+//            if (pStr.find('.') == string::npos) {
+//                obj2.Set(key, val);
+//            } else {
+//                obj2.Set(p, val);
+//            }
+//        }
+//    }
+//    auto finish = std::chrono::high_resolution_clock::now();
+//    std::cout << "JoinObjects Execution time:  "
+//              << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / double(1000000)
+//              << "ms\n";
     return obj2;
 }
 
-Array mapArraysFieldNames(Env &env, Array res, map<string, string> mappings, int length) {
-    int start = clock();
-    Napi::Array outputArray = Napi::Array::New(env, res.Length());
-    for (uint32_t i = 0; i < res.Length(); i++) {
-        Object newObj = Object::New(env);
-//        cout << res.Get(i).Type() << endl;
-        Object obj = res.Get(i).ToObject();
-        Array props = obj.GetPropertyNames();
-        for (uint32_t j = 0; j < props.Length(); j++) {
-            string key = props.Get(j).ToString().Utf8Value();
-            if (key.find(".") != string::npos) {
-                string apiKey = mappings[key];
-                if (apiKey != "" && !newObj.Has(apiKey)) {
-                    newObj.Set(apiKey, obj.Get(key));
-//                    cout << "<< prop before: " << key << ": " << obj.Get(key).ToString().Utf8Value() << endl;
-//                    cout << "<< prop after : '" << apiKey << "': " << obj.Get(key).ToString().Utf8Value() << endl;
-                } else {
-//                    cout << "<< apiKey is not found... " << key << endl;
-                }
-
-
-            } else {
-                key = key;
-                string lookupKey = "t" + to_string(length) + "." + key;
-                string apiKey = mappings[lookupKey];
-                if (apiKey != "") {
-                    newObj.Set(apiKey, obj.Get(key));
-//                    cout << "prop before: " << key << ": " << obj.Get(key).ToString().Utf8Value() << endl;
-//                    cout << "prop after : '" << apiKey << "': " << obj.Get(key).ToString().Utf8Value() << endl;
-                } else {
-//                    cout << "<< apiKey is not found... " << key << endl;
-                }
-            }
-
-
-        }
-        outputArray[i] = newObj;
-    }
-
-    int end = clock();
-    cout << "mapArraysFieldNames Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
-    return outputArray;
-}
-
 void hashTable(Env &env, Array array, vector<string> joinMapping, map<string, Reference<Object>> &hashMap) {
+//    int start = clock();
     for (size_t i = 0; i < array.Length(); ++i) {
         Object o = array.Get(i).ToObject();
         string key = "";
@@ -351,11 +268,13 @@ void hashTable(Env &env, Array array, vector<string> joinMapping, map<string, Re
         }
         hashMap[key] = Reference<Object>::New(o, 1);
     }
+//    int end = clock();
+//    cout << "hashTable Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
 }
 
-Array hashAndJoin(Env &env, vector<Array> &tables, Join &join) {
-    int start = clock();
 
+void hashAndJoin(Env &env, vector<Array> &tables, Join &join) {
+//    int start = clock();
     size_t firstTblIdx = join.GetFirstTableIdx();
     size_t secondTblIdx = join.GetSecondTableIdx();
 
@@ -404,9 +323,11 @@ Array hashAndJoin(Env &env, vector<Array> &tables, Join &join) {
             addedToRes[key] = 1;
             Object theObject = hashMap.find(key)->second.Value();
             if (smaller < bigger) {
+//                cout << &theObject << " - " << &o << endl;
                 Object joined = JoinObjects(env, theObject, o, join, smaller);
                 joinedObjects.push_back(joined);
             } else {
+//                cout << &theObject << " - " << &o << endl;
                 Object joined = JoinObjects(env, o, theObject, join, bigger);
                 joinedObjects.push_back(joined);
             }
@@ -446,31 +367,9 @@ Array hashAndJoin(Env &env, vector<Array> &tables, Join &join) {
     for (auto i = 0; i < matched; i++) {
         outputArray[i] = joinedObjects[i];
     }
-    int end = clock();
-    cout << "hashAndJoin Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
-    return tables[join.GetSecondTableIdx()] = outputArray;
-}
-
-map<int, vector<vector<string>>> getTblJoinsMapping(vector<Join> &joins) {
-    int start = clock();
-    map<int, vector<vector<string>>> tblJoinFields;
-    for (auto &&join : joins) {
-        map<string, string> jFields = join.GetJoinFields();
-        vector<string> v1, v2;
-        for (auto it = jFields.begin(); it != jFields.end(); it++) {
-//            cout << it->first << ": " << it->second << ", ";
-            v1.push_back(it->first);
-            v2.push_back(it->second);
-        }
-//        cout << endl;
-        tblJoinFields[join.GetFirstTableIdx()].push_back(v1);
-        tblJoinFields[join.GetSecondTableIdx()].push_back(v2);
-        join.SetJoinFieldsFirstTable(v1);
-        join.SetJoinFieldsSecondTable(v2);
-    }
-    int end = clock();
-    cout << "getTblJoinsMapping Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
-    return tblJoinFields;
+//    int end = clock();
+//    cout << "hashAndJoin Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+    tables[join.GetSecondTableIdx()] = outputArray;
 }
 
 void checkPropsSame(Env &env, Array p1, Array p2) {
@@ -500,9 +399,8 @@ Array vectorToNapiArray(Env &env, vector<Object> v) {
     return outputArray;
 }
 
-Array getDistinct(Env &env, Array table) {
-    int start = clock();
-    vector<Object> distinct;
+void getDistinct(Env &env, Array &table, vector<Object> &distinct) {
+//    int start = clock();
     uint32_t idx = 0;
     Array props = table.Get(idx).ToObject().GetPropertyNames();
     map<string, int> added;
@@ -517,13 +415,89 @@ Array getDistinct(Env &env, Array table) {
             added[key] = 1;
         }
     }
-    int end = clock();
-    cout << "getDistinct Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
-    return vectorToNapiArray(env, distinct);
+//    int end = clock();
+//    cout << "getDistinct Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+}
+
+void joinJoins(Env &env, vector<Object> &distinct, vector<Object> &joined, map<string, int> &joinsMap,
+               map<string, string> &fMappings, Array &outputArray, int len) {
+    int i = 0;
+    for (Object &o : distinct) {
+        Array properties = o.GetPropertyNames();
+
+
+        Object joins = o.Get("joins").ToObject();
+//        cout << "joins has joins - " << joins.Has("joins") << endl;
+        Array props = joins.GetPropertyNames();
+        for (uint32_t i = 0; i < props.Length(); ++i) {
+            string t = props.Get(i).ToString().Utf8Value();
+//            cout << t << endl;
+            Object ob = joins.Get(t).ToObject();
+            Array propsJoin = ob.GetPropertyNames();
+            for (int j = 0; j < propsJoin.Length(); ++j) {
+                string field = propsJoin.Get(j).ToString().Utf8Value();
+//                cout << "field - " << field << " - fMappings.count(field) " << fMappings.count(t + "." + field) << endl;
+                if (fMappings.count(t + "." + field) > 0) {
+                    string apiField = fMappings[t + "." + field];
+                    if (!o.Has(apiField)) {
+                        o.Set(apiField, ob.Get(field));
+                    } else {
+
+//                        if (o.Get(apiField).ToString().Utf8Value() != ob.Get(field).ToString().Utf8Value()){
+//                              cout << apiField <<" - " << t << " -- " << o.Get(apiField).ToString().Utf8Value() << " == "
+//                                 << ob.Get(field).ToString().Utf8Value() << endl;
+//                        }
+                    }
+                }
+            }
+
+        }
+
+        for (int k = 0; k < properties.Length(); ++k) {
+            Value f = properties.Get(k);
+            string field = f.ToString().Utf8Value();
+//            cout << fMappings.count("t" + to_string(len) + "." + field) << endl;
+            string fn = "t" + to_string(len) + "." + field;
+            if (fMappings.count(fn) > 0) {
+                string apiField = fMappings[fn];
+                if (!o.Has(apiField)) {
+                    o.Set(apiField, o.Get(field));
+                } else {
+
+//                    if (o.Get(apiField).ToString().Utf8Value() != o.Get(field).ToString().Utf8Value()){
+//                        o.Set(apiField, o.Get(field));
+//                        cout << apiField << " -- " << o.Get(apiField).ToString().Utf8Value() << " == "
+//                             << o.Get(field).ToString().Utf8Value() << endl;
+//                    }
+
+
+
+                }
+
+            }
+        }
+
+
+        for (int l = 0; l < properties.Length(); ++l) {
+            string p = properties.Get(l).ToString().Utf8Value();
+            o.Delete(p);
+        }
+
+
+        outputArray[i] = o;
+        i++;
+    }
+
+
+//    cout << "join map size " << joinsMap.size() << endl;
+//    for (auto j : joinsMap) {
+//        cout << j.first << endl;
+//    }
+//    cout << endl;
 }
 
 Array HashJoin(const CallbackInfo &info) {
-    int start = clock();
+//    int start = clock();
     Env env = info.Env();
 
     // parameters from javascript
@@ -532,18 +506,25 @@ Array HashJoin(const CallbackInfo &info) {
 
     vector<Array> tables = util::getJsonVector(env, arrays);
     map<string, string> fMappings = parseSqlFieldMappingsAll(sql);
-    vector<Join> joins = parseSqlGetJoins(env, sql);
-    getTblJoinsMapping(joins);
 
+    map<string, int> joinsMap;
+    vector<Join> joins = parseSqlGetJoins(env, sql, joinsMap);
 
     for (auto join : joins) {
         hashAndJoin(env, tables, join);
     }
 
-    Array distinctObjects = getDistinct(env, tables[tables.size() - 1]);
-    Array res = mapArraysFieldNames(env, distinctObjects, fMappings, tables.size());
-    int end = clock();
-    cout << "Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
+    vector<Object> distinct;
+    getDistinct(env, tables[tables.size() - 1], distinct);
+    vector<Object> joined;
+
+    Array res = Array::New(env, distinct.size());
+    joinJoins(env, distinct, joined, joinsMap, fMappings, res, tables.size());
+
+//    mapArraysFieldNames(env, distinct, fMappings, tables.size(), res);
+
+//    int end = clock();
+//    cout << "Execution time: " << (end - start) / double(CLOCKS_PER_SEC) << endl;
     return res;
 }
 
